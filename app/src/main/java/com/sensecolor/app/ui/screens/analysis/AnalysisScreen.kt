@@ -158,7 +158,8 @@ fun AnalysisScreen(
     if (selectedTapPoint != null) {
         ColorDetailSheet(
             tapPoint = selectedTapPoint,
-            onDismiss = { viewModel.onDismissSheet() }
+            onDismiss = { viewModel.onDismissSheet() },
+            onDelete = { viewModel.deleteTapPoint(selectedTapPoint.id) }
         )
     }
 }

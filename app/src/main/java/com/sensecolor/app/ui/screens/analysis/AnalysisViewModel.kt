@@ -2,6 +2,8 @@ package com.sensecolor.app.ui.screens.analysis
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
@@ -58,8 +60,26 @@ class AnalysisViewModel(
 
                 // Second pass: decode
                 val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-                val bitmap = BitmapFactory.decodeFile(path, decodeOptions)
+                val rawBitmap = BitmapFactory.decodeFile(path, decodeOptions)
                     ?: throw Exception("Failed to decode image")
+
+                // Fix EXIF rotation
+                val exif = ExifInterface(path)
+                val orientation = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+                )
+                val rotation = when (orientation) {
+                    ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+                    ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+                    ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+                    else -> 0f
+                }
+                val bitmap = if (rotation != 0f) {
+                    val matrix = Matrix().apply { postRotate(rotation) }
+                    Bitmap.createBitmap(rawBitmap, 0, 0, rawBitmap.width, rawBitmap.height, matrix, true)
+                        .also { if (it != rawBitmap) rawBitmap.recycle() }
+                } else rawBitmap
 
                 _uiState.value = _uiState.value.copy(bitmap = bitmap, isLoading = false)
             } catch (e: Exception) {
@@ -107,6 +127,11 @@ class AnalysisViewModel(
     }
 
     fun onDismissSheet() {
+        _uiState.value = _uiState.value.copy(selectedTapPointId = null)
+    }
+
+    fun deleteTapPoint(id: Int) {
+        tapPoints.removeAll { it.id == id }
         _uiState.value = _uiState.value.copy(selectedTapPointId = null)
     }
 
