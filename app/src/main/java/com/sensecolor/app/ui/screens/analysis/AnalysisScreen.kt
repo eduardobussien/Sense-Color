@@ -17,6 +17,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,9 +33,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -57,19 +60,44 @@ fun AnalysisScreen(
             TopAppBar(
                 title = { Text("Analyze") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Text("\u2190", style = MaterialTheme.typography.titleLarge)
-                    }
+                    IconButton(
+                        onClick = onNavigateBack,
+                        content = {
+                            Text(
+                                "←",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
+                    )
                 },
                 actions = {
                     if (viewModel.tapPoints.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.clearAllPins() }) {
-                            Text("\u2715", style = MaterialTheme.typography.titleMedium)
+                        // Pin count badge
+                        Text(
+                            text = "${viewModel.tapPoints.size} ${if (viewModel.tapPoints.size == 1) "pin" else "pins"}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(end = 4.dp)
+                        )
+                        IconButton(
+                            onClick = { viewModel.clearAllPins() },
+                            content = {
+                                Text(
+                                    "✕",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+                        )
+                    }
+                    IconButton(
+                        onClick = onNavigateToSettings,
+                        content = {
+                            Text(
+                                "⚙",
+                                style = MaterialTheme.typography.titleLarge
+                            )
                         }
-                    }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Text("\u2699", style = MaterialTheme.typography.titleLarge)
-                    }
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
@@ -100,6 +128,13 @@ fun AnalysisScreen(
                 SampleSizeChip("M", 3, uiState.sampleRadius) { viewModel.setSampleRadius(3) }
                 Spacer(modifier = Modifier.width(4.dp))
                 SampleSizeChip("L", 5, uiState.sampleRadius) { viewModel.setSampleRadius(5) }
+            }
+
+            // Analyzing progress indicator — shown just below chip row, above the image
+            if (uiState.isAnalyzing) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             // Main content area
@@ -136,10 +171,15 @@ fun AnalysisScreen(
                 }
             }
 
-            // Hint text
+            // Smart hint text
             if (!uiState.isLoading && uiState.error == null) {
+                val hintText = if (viewModel.tapPoints.isEmpty()) {
+                    "Tap anywhere on the photo to identify a color"
+                } else {
+                    "Tap a pin to see details • Tap photo for a new pin"
+                }
                 Text(
-                    text = "Tap on the photo to identify colors",
+                    text = hintText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -173,6 +213,7 @@ private fun PhotoWithPins(
     onPinClick: (com.sensecolor.app.data.model.TapPoint) -> Unit
 ) {
     var viewSize by remember { mutableStateOf(IntSize.Zero) }
+    val hapticFeedback = LocalHapticFeedback.current
 
     Box(
         modifier = Modifier
@@ -211,6 +252,7 @@ private fun PhotoWithPins(
                     val normalizedY = (offset.y - offsetY) / scaledHeight
 
                     if (normalizedX in 0f..1f && normalizedY in 0f..1f) {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                         onTap(normalizedX, normalizedY)
                     }
                 }

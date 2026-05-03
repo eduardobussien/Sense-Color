@@ -8,17 +8,24 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,6 +38,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.sensecolor.app.data.model.ColorBlindnessType
@@ -77,6 +87,47 @@ fun OnboardingScreen(
 }
 
 @Composable
+private fun ColorPaletteVisual() {
+    val paletteColors = listOf(
+        Color(0xFFE53935), // Red
+        Color(0xFFFB8C00), // Orange
+        Color(0xFFFDD835), // Yellow
+        Color(0xFF43A047), // Green
+        Color(0xFF1E88E5), // Blue
+        Color(0xFF8E24AA), // Purple
+        Color(0xFFEC407A)  // Pink
+    )
+
+    val circleSize = 48.dp
+    val stepSize = 36.dp
+    // Total width: first circle (48dp) + 6 more steps of 36dp each = 48 + 216 = 264dp
+    val containerWidth = circleSize + stepSize * (paletteColors.size - 1)
+
+    Box(
+        modifier = Modifier
+            .height(circleSize)
+            .width(containerWidth)
+            .padding(bottom = 0.dp)
+            .semantics {
+                contentDescription =
+                    "Color palette showing red, orange, yellow, green, blue, purple, and pink"
+            }
+    ) {
+        // Draw from last to first so earlier circles (red) appear on top
+        paletteColors.indices.reversed().forEach { index ->
+            Box(
+                modifier = Modifier
+                    .size(circleSize)
+                    .offset(x = stepSize * index)
+                    .align(Alignment.CenterStart)
+                    .background(paletteColors[index], CircleShape)
+                    .border(2.dp, Color.White, CircleShape)
+            )
+        }
+    }
+}
+
+@Composable
 private fun WelcomePage(onGetStarted: () -> Unit) {
     Column(
         modifier = Modifier
@@ -86,6 +137,10 @@ private fun WelcomePage(onGetStarted: () -> Unit) {
         verticalArrangement = Arrangement.Center
     ) {
         Spacer(modifier = Modifier.weight(1f))
+
+        ColorPaletteVisual()
+
+        Spacer(modifier = Modifier.height(32.dp))
 
         Text(
             text = "Sense Color",

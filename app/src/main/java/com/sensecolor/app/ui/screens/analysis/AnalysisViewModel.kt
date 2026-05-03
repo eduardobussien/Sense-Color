@@ -22,6 +22,7 @@ data class AnalysisUiState(
     val bitmap: Bitmap? = null,
     val selectedTapPointId: Int? = null,
     val isLoading: Boolean = true,
+    val isAnalyzing: Boolean = false,
     val error: String? = null,
     val colorBlindnessType: ColorBlindnessType = ColorBlindnessType.NONE,
     val sampleRadius: Int = 3
@@ -102,6 +103,7 @@ class AnalysisViewModel(
     fun onImageTapped(normalizedX: Float, normalizedY: Float) {
         val bitmap = _uiState.value.bitmap ?: return
         if (normalizedX !in 0f..1f || normalizedY !in 0f..1f) return
+        _uiState.value = _uiState.value.copy(isAnalyzing = true)
 
         viewModelScope.launch(Dispatchers.Default) {
             val colorResult = PhotoColorAnalyzer.analyzePoint(
@@ -118,7 +120,7 @@ class AnalysisViewModel(
                 colorResult = colorResult
             )
             tapPoints.add(tapPoint)
-            _uiState.value = _uiState.value.copy(selectedTapPointId = tapPoint.id)
+            _uiState.value = _uiState.value.copy(selectedTapPointId = tapPoint.id, isAnalyzing = false)
         }
     }
 

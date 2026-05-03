@@ -14,7 +14,8 @@ import java.io.File
 data class CameraUiState(
     val capturedPhotoUri: String? = null,
     val error: String? = null,
-    val isCapturing: Boolean = false
+    val isCapturing: Boolean = false,
+    val useFrontCamera: Boolean = false
 )
 
 class CameraViewModel : ViewModel() {
@@ -50,6 +51,10 @@ class CameraViewModel : ViewModel() {
                 }
             }
         )
+    }
+
+    fun toggleCamera() {
+        _uiState.value = _uiState.value.copy(useFrontCamera = !_uiState.value.useFrontCamera)
     }
 
     fun clearError() {

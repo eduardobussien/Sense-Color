@@ -1,6 +1,7 @@
 package com.sensecolor.app.ui.screens.analysis
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,10 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.sensecolor.app.data.model.TapPoint
 
@@ -37,6 +42,7 @@ fun ColorDetailSheet(
         green = colorResult.rgb.second / 255f,
         blue = colorResult.rgb.third / 255f
     )
+    val clipboardManager = LocalClipboardManager.current
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -80,14 +86,20 @@ fun ColorDetailSheet(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Info rows
-            InfoRow(label = "Hex", value = colorResult.hex)
+            InfoRow(
+                label = "Hex",
+                value = colorResult.hex,
+                onCopyHex = {
+                    clipboardManager.setText(AnnotatedString(colorResult.hex))
+                }
+            )
             InfoRow(
                 label = "RGB",
                 value = "R: ${colorResult.rgb.first}, G: ${colorResult.rgb.second}, B: ${colorResult.rgb.third}"
             )
             InfoRow(
                 label = "HSL",
-                value = "H: ${colorResult.hsl.first.toInt()}\u00B0, S: ${(colorResult.hsl.second * 100).toInt()}%, L: ${(colorResult.hsl.third * 100).toInt()}%"
+                value = "H: ${colorResult.hsl.first.toInt()}°, S: ${(colorResult.hsl.second * 100).toInt()}%, L: ${(colorResult.hsl.third * 100).toInt()}%"
             )
 
             // Confusion warning
@@ -113,7 +125,9 @@ fun ColorDetailSheet(
             // Remove pin button
             OutlinedButton(
                 onClick = onDelete,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "Remove color pin from photo" }
             ) {
                 Text("Remove this pin")
             }
@@ -122,7 +136,11 @@ fun ColorDetailSheet(
 }
 
 @Composable
-private fun InfoRow(label: String, value: String) {
+private fun InfoRow(
+    label: String,
+    value: String,
+    onCopyHex: (() -> Unit)? = null
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -134,10 +152,25 @@ private fun InfoRow(label: String, value: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(0.25f)
         )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(0.75f)
-        )
+        if (onCopyHex != null) {
+            Column(modifier = Modifier.weight(0.75f)) {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.clickable(onClick = onCopyHex)
+                )
+                Text(
+                    text = "(tap to copy)",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(0.75f)
+            )
+        }
     }
 }
