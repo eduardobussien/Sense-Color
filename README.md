@@ -75,18 +75,6 @@ No API keys required. Everything runs on-device.
 
 ---
 
-## Screenshots
-
-| Onboarding | Color Test | Analysis | Detail Sheet |
-|---|---|---|---|
-| ![](screenshots/onboarding.png) | ![](screenshots/color_test.png) | ![](screenshots/analysis.png) | ![](screenshots/detail.png) |
-
-| Simulation | Camera | Settings | Splash |
-|---|---|---|---|
-| ![](screenshots/analysis_simulation.png) | ![](screenshots/camera.png) | ![](screenshots/settings.png) | ![](screenshots/splash.png) |
-
----
-
 ## Disclaimer
 
 The built-in color vision test is a screening tool only and is not a substitute for a professional medical diagnosis.
