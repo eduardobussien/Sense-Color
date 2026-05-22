@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.sensecolor.app.data.model.ColorBlindnessType
 import com.sensecolor.app.data.model.TapPoint
 import com.sensecolor.app.data.repository.UserPreferencesRepository
+import com.sensecolor.app.domain.ColorBlindnessEngine
 import com.sensecolor.app.domain.PhotoColorAnalyzer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +26,9 @@ data class AnalysisUiState(
     val isAnalyzing: Boolean = false,
     val error: String? = null,
     val colorBlindnessType: ColorBlindnessType = ColorBlindnessType.NONE,
-    val sampleRadius: Int = 3
+    val sampleRadius: Int = 3,
+    val showSimulation: Boolean = false,
+    val simulatedBitmap: Bitmap? = null
 )
 
 class AnalysisViewModel(
@@ -95,7 +98,10 @@ class AnalysisViewModel(
     private fun observePreferences() {
         viewModelScope.launch {
             preferencesRepository.userPreferencesFlow.collect { prefs ->
-                _uiState.value = _uiState.value.copy(colorBlindnessType = prefs.colorBlindnessType)
+                _uiState.value = _uiState.value.copy(
+                    colorBlindnessType = prefs.colorBlindnessType,
+                    simulatedBitmap = null
+                )
             }
         }
     }
@@ -144,5 +150,33 @@ class AnalysisViewModel(
 
     fun setSampleRadius(radius: Int) {
         _uiState.value = _uiState.value.copy(sampleRadius = radius.coerceIn(1, 7))
+    }
+
+    fun toggleSimulation() {
+        val state = _uiState.value
+        if (state.bitmap == null) return
+        val newShow = !state.showSimulation
+        if (newShow && state.simulatedBitmap == null) {
+            viewModelScope.launch(Dispatchers.Default) {
+                val matrix = ColorBlindnessEngine.getSimulationMatrix(state.colorBlindnessType)
+                val simBitmap = if (matrix != null) {
+                    simulateBitmap(state.bitmap, matrix)
+                } else null
+                _uiState.value = _uiState.value.copy(showSimulation = newShow, simulatedBitmap = simBitmap)
+            }
+        } else {
+            _uiState.value = state.copy(showSimulation = newShow)
+        }
+    }
+
+    private fun simulateBitmap(source: Bitmap, matrix: FloatArray): Bitmap {
+        val result = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(result)
+        val cm = android.graphics.ColorMatrix(matrix)
+        val paint = android.graphics.Paint().apply {
+            colorFilter = android.graphics.ColorMatrixColorFilter(cm)
+        }
+        canvas.drawBitmap(source, 0f, 0f, paint)
+        return result
     }
 }

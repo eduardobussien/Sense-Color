@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
                             preferencesRepository = preferencesRepository
                         )
                     } else {
-                        // Loading state while preferences are being read
+
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center

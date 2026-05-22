@@ -76,4 +76,60 @@ object ColorBlindnessEngine {
         val pairs = confusionMap[type] ?: return null
         return pairs.firstOrNull { it.color1 == tier1Name }?.message
     }
+
+    /**
+     * Returns a 20-element ColorMatrix float array (4×5 row-major, RGBA+offset) for the given
+     * color blindness type, suitable for use with android.graphics.ColorMatrix(FloatArray).
+     * Returns null for NONE (no transformation needed).
+     *
+     * Matrices based on Machado et al. 2009, severity = 1.0.
+     * Anomaly types (protanomaly, deuteranomaly, tritanomaly) use 50% blend with identity.
+     */
+    fun getSimulationMatrix(type: ColorBlindnessType): FloatArray? {
+        // Convert a 3×3 RGB matrix (row-major) to a 20-element ColorMatrix (4×5)
+        fun to20(m: FloatArray): FloatArray = floatArrayOf(
+            m[0], m[1], m[2], 0f, 0f,   // R' = f(R,G,B)
+            m[3], m[4], m[5], 0f, 0f,   // G' = f(R,G,B)
+            m[6], m[7], m[8], 0f, 0f,   // B' = f(R,G,B)
+            0f,   0f,   0f,   1f, 0f    // A passthrough
+        )
+
+        // Blend a 3×3 matrix 50% with the identity matrix
+        fun blend50(m: FloatArray): FloatArray {
+            val identity = floatArrayOf(1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f)
+            return FloatArray(9) { i -> (m[i] + identity[i]) / 2f }
+        }
+
+        val protanopia = floatArrayOf(
+             0.152286f,  1.052583f, -0.204868f,
+             0.114503f,  0.786281f,  0.099216f,
+            -0.003882f, -0.048116f,  1.051998f
+        )
+        val deuteranopia = floatArrayOf(
+             0.367322f,  0.860646f, -0.227968f,
+             0.280085f,  0.672501f,  0.047413f,
+            -0.011820f,  0.042940f,  0.968881f
+        )
+        val tritanopia = floatArrayOf(
+             1.255528f, -0.076749f, -0.178779f,
+            -0.078411f,  0.930809f,  0.147602f,
+             0.004733f,  0.691367f,  0.303900f
+        )
+        val achromatopsia = floatArrayOf(
+            0.299f, 0.587f, 0.114f,
+            0.299f, 0.587f, 0.114f,
+            0.299f, 0.587f, 0.114f
+        )
+
+        return when (type) {
+            ColorBlindnessType.NONE         -> null
+            ColorBlindnessType.PROTANOPIA   -> to20(protanopia)
+            ColorBlindnessType.DEUTERANOPIA -> to20(deuteranopia)
+            ColorBlindnessType.TRITANOPIA   -> to20(tritanopia)
+            ColorBlindnessType.PROTANOMALY  -> to20(blend50(protanopia))
+            ColorBlindnessType.DEUTERANOMALY -> to20(blend50(deuteranopia))
+            ColorBlindnessType.TRITANOMALY  -> to20(blend50(tritanopia))
+            ColorBlindnessType.ACHROMATOPSIA -> to20(achromatopsia)
+        }
+    }
 }

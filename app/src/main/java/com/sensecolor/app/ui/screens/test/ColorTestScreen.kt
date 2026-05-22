@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -137,10 +138,11 @@ private fun TestPlateContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(horizontal = 16.dp)
     ) {
-        // Ishihara plate
+        // Ishihara plate — capped at 360dp so it stays usable in landscape
         IshiharaPlate(
             plate = plate,
             modifier = Modifier
+                .widthIn(max = 360.dp)
                 .fillMaxWidth()
                 .aspectRatio(1f)
                 .padding(horizontal = 24.dp)

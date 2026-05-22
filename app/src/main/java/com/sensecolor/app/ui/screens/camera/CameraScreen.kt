@@ -1,6 +1,9 @@
 package com.sensecolor.app.ui.screens.camera
 
+import android.net.Uri
 import android.view.ViewGroup
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
@@ -12,14 +15,18 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,7 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
@@ -44,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.sensecolor.app.util.RequireCameraPermission
+import java.io.File
 
 @Composable
 fun CameraScreen(
@@ -73,7 +81,18 @@ private fun CameraContent(
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
 
-    // Rebind camera when previewView is available or when front/back is toggled
+    // Gallery picker — copies selected image to cache so AnalysisViewModel can read it
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri ?: return@rememberLauncherForActivityResult
+        val tempFile = File(context.cacheDir, "gallery_${System.currentTimeMillis()}.jpg")
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            tempFile.outputStream().use { output -> input.copyTo(output) }
+        }
+        onPhotoTaken(Uri.fromFile(tempFile).toString())
+    }
+
     LaunchedEffect(previewView, uiState.useFrontCamera) {
         val view = previewView ?: return@LaunchedEffect
         val cameraProvider = cameraProviderFuture.get()
@@ -87,112 +106,125 @@ private fun CameraContent(
         }
         try {
             cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(
-                lifecycleOwner,
-                cameraSelector,
-                preview,
-                imageCapture
-            )
-        } catch (_: Exception) {
-            // Camera binding failed
-        }
+            cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview, imageCapture)
+        } catch (_: Exception) {}
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Camera preview
-        AndroidView(
-            factory = { ctx ->
-                PreviewView(ctx).apply {
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-                    previewView = this
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // Bottom gradient overlay — transparent to dark, covering bottom 30%
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxSize(0.30f)
-                .align(Alignment.BottomCenter)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color(0xCC000000))
-                    )
-                )
-        )
-
-        // Settings button (top right) with semi-transparent pill background
-        Text(
-            text = "Settings",
-            color = Color.White,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .background(Color(0x88000000), RoundedCornerShape(20.dp))
-                .padding(horizontal = 12.dp, vertical = 6.dp)
-                .clickable(onClick = onNavigateToSettings)
-        )
-
-        // Bottom controls: flip button + capture button
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Themed top bar
         Row(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 56.dp),
-            horizontalArrangement = Arrangement.spacedBy(48.dp),
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Camera flip button
+            Text(
+                text = "Sense Color",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "⚙",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .clickable(onClick = onNavigateToSettings)
+                    .semantics { contentDescription = "Open settings" }
+            )
+        }
+
+        // Camera preview — rotated 90° so laptop webcam fills portrait screen
+        Box(modifier = Modifier.weight(1f).clipToBounds()) {
+            AndroidView(
+                factory = { ctx ->
+                    PreviewView(ctx).apply {
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                        implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                        scaleType = PreviewView.ScaleType.FILL_CENTER
+                        previewView = this
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+
+            // Error snackbar
+            uiState.error?.let { errorMessage ->
+                Snackbar(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp),
+                    action = {
+                        TextButton(onClick = { cameraViewModel.clearError() }) {
+                            Text("Dismiss")
+                        }
+                    }
+                ) {
+                    Text(text = errorMessage)
+                }
+            }
+        }
+
+        // Themed bottom bar: gallery | shutter | flip
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .navigationBarsPadding()
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Gallery picker button
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
+                    .clickable { galleryLauncher.launch("image/*") }
+                    .semantics { contentDescription = "Pick photo from gallery" }
+            ) {
+                Text(
+                    text = "🖼",
+                    fontSize = 24.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // Shutter button
+            if (uiState.isCapturing) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(72.dp),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                CaptureButton(onClick = {
+                    cameraViewModel.capturePhoto(context, imageCapture, onPhotoTaken)
+                })
+            }
+
+            // Flip camera button
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.40f), CircleShape)
+                    .background(MaterialTheme.colorScheme.primary, CircleShape)
                     .clickable { cameraViewModel.toggleCamera() }
                     .semantics { contentDescription = "Switch camera" }
             ) {
                 Text(
                     text = "⇄",
                     color = Color.White,
-                    fontSize = 24.sp,
+                    fontSize = 26.sp,
                     textAlign = TextAlign.Center
                 )
-            }
-
-            // Capture button
-            if (uiState.isCapturing) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(72.dp),
-                    color = Color.White
-                )
-            } else {
-                CaptureButton(
-                    onClick = {
-                        cameraViewModel.capturePhoto(context, imageCapture, onPhotoTaken)
-                    }
-                )
-            }
-        }
-
-        // Error snackbar
-        uiState.error?.let { errorMessage ->
-            Snackbar(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp),
-                action = {
-                    TextButton(onClick = { cameraViewModel.clearError() }) {
-                        Text("Dismiss")
-                    }
-                }
-            ) {
-                Text(text = errorMessage)
             }
         }
     }
@@ -204,8 +236,8 @@ private fun CaptureButton(onClick: () -> Unit) {
         modifier = Modifier
             .size(72.dp)
             .clip(CircleShape)
-            .background(Color.White, CircleShape)
-            .border(BorderStroke(4.dp, Color.DarkGray), CircleShape)
+            .background(MaterialTheme.colorScheme.primary, CircleShape)
+            .border(BorderStroke(4.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)), CircleShape)
             .clickable(onClick = onClick)
             .semantics { contentDescription = "Take photo" }
     )

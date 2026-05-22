@@ -2,6 +2,7 @@ package com.sensecolor.app.ui.screens.analysis
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.sensecolor.app.data.model.ColorBlindnessType
 import com.sensecolor.app.data.repository.UserPreferencesRepository
 import com.sensecolor.app.ui.components.ColorLabelOverlay
 
@@ -85,6 +87,23 @@ fun AnalysisScreen(
                                 Text(
                                     "✕",
                                     style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+                        )
+                    }
+                    if (!uiState.isLoading && uiState.error == null && uiState.bitmap != null &&
+                        uiState.colorBlindnessType != ColorBlindnessType.NONE
+                    ) {
+                        IconButton(
+                            onClick = { viewModel.toggleSimulation() },
+                            content = {
+                                Text(
+                                    "👁",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = if (uiState.showSimulation)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         )
@@ -141,7 +160,8 @@ fun AnalysisScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .background(MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center
             ) {
                 when {
@@ -158,8 +178,12 @@ fun AnalysisScreen(
                         )
                     }
                     uiState.bitmap != null -> {
+                        val displayBitmap = if (uiState.showSimulation && uiState.simulatedBitmap != null)
+                            uiState.simulatedBitmap!!
+                        else
+                            uiState.bitmap!!
                         PhotoWithPins(
-                            bitmap = uiState.bitmap!!,
+                            bitmap = displayBitmap,
                             tapPoints = viewModel.tapPoints,
                             selectedPointId = uiState.selectedTapPointId,
                             onTap = { normalizedX, normalizedY ->
@@ -169,6 +193,19 @@ fun AnalysisScreen(
                         )
                     }
                 }
+            }
+
+            // Simulation active badge
+            if (uiState.showSimulation) {
+                Text(
+                    text = "Simulating ${uiState.colorBlindnessType.name.lowercase().replace('_', ' ')}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                )
             }
 
             // Smart hint text

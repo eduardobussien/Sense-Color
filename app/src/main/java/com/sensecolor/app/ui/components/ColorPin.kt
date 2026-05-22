@@ -1,5 +1,8 @@
 package com.sensecolor.app.ui.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,8 +12,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -36,9 +45,23 @@ fun ColorPin(
     val borderWidth = if (isSelected) 3.dp else 2.dp
     val elevation = if (isSelected) 8.dp else 0.dp
 
+    // Spring pop-in animation when pin is first composed
+    var appeared by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (appeared) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "pin-scale"
+    )
+    LaunchedEffect(Unit) { appeared = true }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.clickable(onClick = onClick)
+        modifier = modifier
+            .scale(scale)
+            .clickable(onClick = onClick)
     ) {
         Box(
             modifier = Modifier
