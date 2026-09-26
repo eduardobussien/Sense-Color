@@ -1,6 +1,6 @@
 # Sense Color
 
-A color identification Android app designed for everyone — especially users with color vision deficiencies. Point your camera at anything, tap on it, and instantly get the exact color name, hex code, RGB, and HSL values.
+A color identification Android app designed for everyone, especially users with color vision deficiencies. Point your camera at anything, tap on it, and instantly get the exact color name, hex code, RGB, and HSL values.
 
 <p align="center">
   <img src="screenshots/onboarding.png" width="23%" />
