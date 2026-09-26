@@ -16,12 +16,12 @@ val Sienna40 = Color(0xFF5D4037)
 val Amber80 = Color(0xFFFFCC80)
 val Amber40 = Color(0xFFF57F17)
 
-// Light theme surfaces — warm cream, not cold white
+// Light theme surfaces: warm cream, not cold white
 val CreamBackground = Color(0xFFFDFAF5)
 val CreamSurface = Color(0xFFFFFFFF)
 val CreamSurfaceVariant = Color(0xFFF5EFE6)
 
-// Dark theme surfaces — warm dark, not cold black
+// Dark theme surfaces: warm dark, not cold black
 val DarkBackground = Color(0xFF1A1208)
 val DarkSurface = Color(0xFF231A0D)
 val DarkSurfaceVariant = Color(0xFF2E2214)

@@ -138,7 +138,7 @@ private fun TestPlateContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(horizontal = 16.dp)
     ) {
-        // Ishihara plate — capped at 360dp so it stays usable in landscape
+        // Ishihara plate capped at 360dp so it stays usable in landscape
         IshiharaPlate(
             plate = plate,
             modifier = Modifier

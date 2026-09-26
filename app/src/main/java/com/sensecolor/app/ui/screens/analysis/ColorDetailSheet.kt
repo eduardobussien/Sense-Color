@@ -192,7 +192,7 @@ private fun shareColorCard(context: Context, colorResult: ColorResult) {
     val textXLabel = 452f
     val textXValue = 580f
 
-    // Color name (specificName) — bold, size 42
+    // Color name (specificName): bold, size 42
     val namePaint = Paint().apply {
         color = darkColor
         textSize = 42f
@@ -201,7 +201,7 @@ private fun shareColorCard(context: Context, colorResult: ColorResult) {
     }
     canvas.drawText(colorResult.specificName, textXLabel, 60f, namePaint)
 
-    // Primary category — normal, size 28
+    // Primary category: normal, size 28
     val categoryPaint = Paint().apply {
         color = mutedColor
         textSize = 28f
@@ -210,7 +210,7 @@ private fun shareColorCard(context: Context, colorResult: ColorResult) {
     }
     canvas.drawText(colorResult.primaryName, textXLabel, 115f, categoryPaint)
 
-    // Label paint — normal, size 22, muted
+    // Label paint: normal, size 22, muted
     val labelPaint = Paint().apply {
         color = mutedColor
         textSize = 22f
@@ -218,7 +218,7 @@ private fun shareColorCard(context: Context, colorResult: ColorResult) {
         isAntiAlias = true
     }
 
-    // Value paint — bold, size 22, dark
+    // Value paint: bold, size 22, dark
     val valuePaint = Paint().apply {
         color = darkColor
         textSize = 22f
@@ -243,7 +243,7 @@ private fun shareColorCard(context: Context, colorResult: ColorResult) {
     canvas.drawText("HSL", textXLabel, 265f, labelPaint)
     canvas.drawText(hslValue, textXValue, 265f, valuePaint)
 
-    // Branding text — centered in right panel (x center = 660), y=330
+    // Branding text: centered in right panel (x center = 660), y=330
     val brandPaint = Paint().apply {
         color = brandColor
         textSize = 18f

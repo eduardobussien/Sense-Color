@@ -23,6 +23,6 @@ app/build/
 # Google Services (contains API keys)
 google-services.json
 
-# Claude internal config
+# Local dev config (not for repo)
 .claude/
 CLAUDE.md

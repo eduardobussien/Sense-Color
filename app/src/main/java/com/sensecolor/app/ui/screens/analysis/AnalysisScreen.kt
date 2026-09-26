@@ -149,7 +149,7 @@ fun AnalysisScreen(
                 SampleSizeChip("L", 5, uiState.sampleRadius) { viewModel.setSampleRadius(5) }
             }
 
-            // Analyzing progress indicator — shown just below chip row, above the image
+            // Analyzing progress indicator shown just below chip row, above the image
             if (uiState.isAnalyzing) {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth()
@@ -303,7 +303,7 @@ private fun PhotoWithPins(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Overlay pins — need to match ContentScale.Fit positioning
+        // Overlay pins: need to match ContentScale.Fit positioning
         if (tapPoints.isNotEmpty() && viewSize.width > 0) {
             val bw = bitmap.width.toFloat()
             val bh = bitmap.height.toFloat()

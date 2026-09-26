@@ -81,7 +81,7 @@ private fun CameraContent(
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
 
-    // Gallery picker — copies selected image to cache so AnalysisViewModel can read it
+    // Gallery picker: copies selected image to cache so AnalysisViewModel can read it
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -136,7 +136,7 @@ private fun CameraContent(
             )
         }
 
-        // Camera preview — rotated 90° so laptop webcam fills portrait screen
+        // Camera preview
         Box(modifier = Modifier.weight(1f).clipToBounds()) {
             AndroidView(
                 factory = { ctx ->

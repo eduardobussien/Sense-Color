@@ -16,12 +16,12 @@ private val provider = GoogleFont.Provider(
     certificates = R.array.com_google_android_gms_fonts_certs
 )
 
-// DM Serif Display — elegant retro serif for headlines
+// DM Serif Display: elegant retro serif for headlines
 private val DmSerifDisplay = FontFamily(
     Font(googleFont = GoogleFont("DM Serif Display"), fontProvider = provider)
 )
 
-// DM Sans — clean geometric sans for body text
+// DM Sans: clean geometric sans for body text
 private val DmSans = FontFamily(
     Font(
         googleFont = GoogleFont("DM Sans"),
@@ -46,7 +46,7 @@ private val DmSans = FontFamily(
 )
 
 val Typography = Typography(
-    // Serif for big display/headline text — the "retro" personality
+    // Serif for big display/headline text (the "retro" personality)
     displayLarge = TextStyle(
         fontFamily = DmSerifDisplay,
         fontWeight = FontWeight.Normal,
@@ -68,7 +68,7 @@ val Typography = Typography(
         lineHeight = 32.sp,
         letterSpacing = 0.sp
     ),
-    // Sans for functional UI text — the "modern" half
+    // Sans for functional UI text (the "modern" half)
     titleLarge = TextStyle(
         fontFamily = DmSans,
         fontWeight = FontWeight.SemiBold,
